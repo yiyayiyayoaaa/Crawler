@@ -6,6 +6,6 @@
 .idea
 *.iml
 target
-test
+
 out
 gen

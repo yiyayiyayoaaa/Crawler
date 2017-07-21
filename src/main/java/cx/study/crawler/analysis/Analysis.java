@@ -1,5 +1,6 @@
 package cx.study.crawler.analysis;
 
+import cx.study.crawler.core.UrlsManager;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
@@ -13,17 +14,25 @@ import java.util.List;
 public abstract class Analysis<T> {
 
     /**
+     *  Urls管理器  保存url
+     */
+    protected UrlsManager urlsManager;
+
+    public void setUrlsManager(UrlsManager urlsManager) {
+        this.urlsManager = urlsManager;
+    }
+    /**
      *  解析网页信息
      * @param html String
      * @return List<T>
      */
-    public List<T> analysis(String html){
+    public List<T> analysis(String html,Object ... objects){
         if (html == null) {
             return null;
         }
-        Elements elements = analysis2String(html);
+        Elements elements = analysis2String(html,objects);
         List<T> list = new ArrayList<>();
-        elements.forEach(e -> list.add(analysis2Bean(e)));
+        elements.forEach((e) -> list.add(analysis2Bean(e, objects)));
         return list;
     }
 
@@ -32,12 +41,12 @@ public abstract class Analysis<T> {
      * @param string String 网页信息
      * @return JSoup Elements
      */
-    public abstract Elements analysis2String(String string);
+    public abstract Elements analysis2String(String string,Object ... objects);
 
     /**
      *  处理节点  将节点解析成实体对象
      * @param element JSoup Element
      * @return 实体对象
      */
-    public abstract T analysis2Bean(Element element);
+    public abstract T analysis2Bean(Element element,Object ... objects);
 }

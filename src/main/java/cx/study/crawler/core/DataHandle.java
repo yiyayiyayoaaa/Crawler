@@ -10,7 +10,7 @@ public interface DataHandle<T> {
 
     /**
      * 数据处理
-     * @param t
+     * @param t T
      */
     void handle(T t);
     void handle(List<T> list);

@@ -2,6 +2,7 @@ package cx.study.crawler.http;
 
 import cx.study.crawler.analysis.Analysis;
 import cx.study.crawler.bean.ProxyAddress;
+import cx.study.crawler.core.UrlsManager;
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -26,7 +27,7 @@ public class HttpClient{
     private LinkedList<ProxyAddress> proxyAddresses; //代理ip
     private Analysis<ProxyAddress>  addressAnalysis;
     private String proxyUrl;
-
+    private UrlsManager urlsManager;
     /**
      * 添加代理解析对象
      * @param addressAnalysis Analysis<ProxyAddress>
@@ -34,6 +35,10 @@ public class HttpClient{
     public void setAddressAnalysis(Analysis<ProxyAddress> addressAnalysis, String proxyUrl) {
         this.addressAnalysis = addressAnalysis;
         this.proxyUrl = proxyUrl;
+    }
+
+    public void setUrlsManager(UrlsManager urlsManager) {
+        this.urlsManager = urlsManager;
     }
     /**
      * 超时时长,单位秒
@@ -64,9 +69,11 @@ public class HttpClient{
         }
         if (proxyAddresses.size() < 2 && addressAnalysis != null) {
             //发送请求 获取代理地址
+            System.out.println("获取代理地址");
             List<ProxyAddress> analysis = addressAnalysis.analysis(get(proxyUrl));
             proxyAddresses.addAll(analysis);
         }
+        System.out.println("切换代理");
         ProxyAddress proxyAddress = proxyAddresses.pop();
         Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyAddress.getAddress(), proxyAddress.getPort()));
         okHttpClient = getHttpClient().newBuilder().proxy(proxy).build();
@@ -92,10 +99,13 @@ public class HttpClient{
                 html = response.body().string();
             } else {
                 //访问失败 将地址添加回队列
+                urlsManager.addUrl(url);
+                updateProxy();
             }
         } catch (IOException e) {
             e.printStackTrace();
-            updateProxy();
+            //updateProxy();
+            urlsManager.addUrl(url);
         }
         return html ;
     }
