@@ -7,14 +7,13 @@ import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.net.Proxy;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -23,6 +22,7 @@ import java.util.concurrent.TimeUnit;
  */
 public class HttpClient{
 
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     private  OkHttpClient okHttpClient;
     private LinkedList<ProxyAddress> proxyAddresses; //代理ip
     private Analysis<ProxyAddress>  addressAnalysis;
@@ -43,7 +43,7 @@ public class HttpClient{
     /**
      * 超时时长,单位秒
      */
-    private static final long TIME_OUT = 15;
+    private static final long TIME_OUT = 10;
 
     private OkHttpClient getHttpClient() {
         if (okHttpClient == null) {
@@ -67,16 +67,18 @@ public class HttpClient{
         if (proxyAddresses == null) {
             proxyAddresses = new LinkedList<>();
         }
-        if (proxyAddresses.size() < 2 && addressAnalysis != null) {
+        if (proxyAddresses.size() < 15 && addressAnalysis != null) {
             //发送请求 获取代理地址
-            System.out.println("获取代理地址");
+            logger.info("正在获取代理地址......");
+            proxyAddresses.clear();
+            okHttpClient = getHttpClient().newBuilder().proxy(null).build();
             List<ProxyAddress> analysis = addressAnalysis.analysis(get(proxyUrl));
             proxyAddresses.addAll(analysis);
         }
-        System.out.println("切换代理");
         ProxyAddress proxyAddress = proxyAddresses.pop();
         Proxy proxy = new Proxy(Proxy.Type.HTTP, new InetSocketAddress(proxyAddress.getAddress(), proxyAddress.getPort()));
         okHttpClient = getHttpClient().newBuilder().proxy(proxy).build();
+        logger.info("切换代理中......剩余代理ip：" + proxyAddresses.size());
     }
 
     /**
@@ -85,6 +87,7 @@ public class HttpClient{
      * @return Response
      */
     public String get(String url){
+        logger.info("正在爬取：" + url);
         Request request = new Request.Builder()
                 .url(url)
                 .get()
@@ -92,22 +95,31 @@ public class HttpClient{
                 .build();
         Call call = getHttpClient().newCall(request);
         String html = null;
+        Response response = null;
         try {
-            Response response = call.execute();
-            System.out.println("Response Code:" + response.code());
+            response = call.execute();
             if (response.code() == 200) {
+                logger.info("请求成功：" + response.code());
                 html = response.body().string();
+                urlsManager.urlSuccess(url);//访问成功的url
             } else {
                 //访问失败 将地址添加回队列
-                urlsManager.addUrl(url);
-                updateProxy();
+                logger.error("请求失败：" + response.code());
+                updateProxyAndRestUrl(url);
             }
-        } catch (IOException e) {
-            e.printStackTrace();
-            //updateProxy();
-            urlsManager.addUrl(url);
+        } catch (Exception e) {
+            logger.error("请求失败：" + e.getMessage());
+            updateProxyAndRestUrl(url);
+        } finally {
+            if (response!= null) {
+                response.close();
+            }
         }
         return html ;
     }
 
+    private void updateProxyAndRestUrl(String url){
+        updateProxy();
+        urlsManager.addUrl(url);
+    }
 }

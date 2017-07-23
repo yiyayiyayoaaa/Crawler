@@ -4,8 +4,8 @@ import cx.study.crawler.analysis.Analysis;
 import cx.study.crawler.http.HttpClient;
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
-
-import java.util.List;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 
 /**
@@ -13,7 +13,7 @@ import java.util.List;
  * Created by xiao on 2017/7/21.
  */
 public class Crawler<T>{
-
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
     private HttpClient httpClient;
     private UrlsManager urlsManager;
     private Analysis<T> analysis;
@@ -37,17 +37,27 @@ public class Crawler<T>{
         while (!isStop) {
             String url = urlsManager.getUrl();
             if (url != null) {
-                String html = httpClient.get(url);
-                List<T> list = this.analysis.analysis(html, url);
-                dataHandle.handle(list);
+                Observable.create(o -> {
+                    String html = httpClient.get(url);
+                    if (html != null){
+                        o.onNext(html);
+                    }
+                }).observeOn(Schedulers.io()).subscribe(html->{
+                    dataHandle.handle(analysis.analysis(html.toString(),url));
+                    logger.info("待爬取url数量：" + urlsManager.count());
+                });
             } else {
-                try {
-                    Thread.sleep(10000);
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }
-                System.out.println("暂时没有可以爬取的URL！");
+                logger.info("暂时没有可以爬取的URL！");
+                sleep(2000);
             }
+        }
+    }
+
+    private void sleep(long time){
+        try {
+            Thread.sleep(time);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
     }
 

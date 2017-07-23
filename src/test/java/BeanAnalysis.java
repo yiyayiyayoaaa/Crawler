@@ -30,8 +30,8 @@ public class BeanAnalysis extends Analysis<Bean>{
             String name = tagA.text();
             String code = element.child(1).child(0).text();
             String url = ((String) objects[0]).replace(base,"").replace("/","");
-            System.out.println(url);
-            bean = new Bean(code,url,name);
+            String parentCode = "".equals(url)?null:url.substring(0,12);
+            bean = new Bean(code,parentCode,name);
             urlsManager.addUrl(base + href);
         }
         return bean;

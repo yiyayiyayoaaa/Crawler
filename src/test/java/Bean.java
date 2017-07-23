@@ -1,11 +1,17 @@
+import javax.persistence.*;
+
 /**
  *
  * Created by xiao on 2017/7/21.
  */
+@Entity
+@Table(name = "bean")
 public class Bean {
+    @Id
     private String code;
     private String parentCode;
     private String name;
+    @Transient
     private String url;
 
     public Bean(String code, String parentCode, String name) {

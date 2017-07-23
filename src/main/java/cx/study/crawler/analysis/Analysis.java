@@ -6,6 +6,8 @@ import org.jsoup.select.Elements;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -32,8 +34,8 @@ public abstract class Analysis<T> {
         }
         Elements elements = analysis2String(html,objects);
         List<T> list = new ArrayList<>();
-        elements.forEach((e) -> list.add(analysis2Bean(e, objects)));
-        return list;
+        elements.forEach(e -> list.add(analysis2Bean(e, objects)));
+        return list.stream().filter(Objects::nonNull).collect(Collectors.toList());
     }
 
     /**

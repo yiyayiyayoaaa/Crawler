@@ -8,10 +8,11 @@ import java.util.List;
  */
 public interface DataHandle<T> {
 
+
     /**
      * 数据处理
      * @param t T
      */
-    void handle(T t);
-    void handle(List<T> list);
+    boolean handle(T t);
+    boolean handle(List<T> list);
 }
