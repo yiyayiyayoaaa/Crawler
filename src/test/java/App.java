@@ -81,14 +81,19 @@ public class App<T>{
         if (service != null && !service.isShutdown()) {
             crawler.stop();
             service.shutdown();
-            while (service.isShutdown()){
-                urlsManager.stop();
-                break;
+            while (!service.isTerminated()){
+                jTextPane.setText("正在停止中.");
+                jTextPane.setText("正在停止中..");
+                jTextPane.setText("正在停止中...");
+                jTextPane.setText("正在停止中....");
+                jTextPane.setText("正在停止中.....");
+                jTextPane.setText("正在停止中......");
             }
             jTextPane.setText("停止");
             service = null;
         }
-       // System.exit(0);
+        urlsManager.stop();
+        System.exit(0);
     }
 
     public static void main(String[] args) throws IOException {
